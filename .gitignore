@@ -1,0 +1,21 @@
+# Python virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Private mood data
+mental_health_data.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# IDE and system files
+.vscode/
+.DS_Store
+Thumbs.db

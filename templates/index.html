@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MindCare | Mental Wellness</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f3ff;
+            color: #282044;
+        }
+
+        header {
+            background: linear-gradient(135deg, #6d28d9, #a78bfa);
+            color: white;
+            padding: 28px 8%;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit, minmax(260px, 1fr)
+            );
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px #4c1d9510;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #6d28d9;
+            margin-top: 0;
+        }
+
+        .moods {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .mood {
+            border: 2px solid #ede9fe;
+            background: #faf9ff;
+            border-radius: 12px;
+            padding: 12px 6px;
+            cursor: pointer;
+            flex: 1;
+            font-size: 22px;
+        }
+
+        .mood span {
+            display: block;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .mood.selected {
+            border-color: #7c3aed;
+            background: #ede9fe;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 12px;
+            border: 1px solid #ddd6fe;
+            border-radius: 10px;
+            resize: vertical;
+            font: inherit;
+        }
+
+        button.primary {
+            width: 100%;
+            margin-top: 15px;
+            background: #7c3aed;
+            color: white;
+            padding: 13px;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button.primary:hover {
+            background: #5b21b6;
+        }
+
+        button:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid #a78bfa;
+            outline-offset: 2px;
+        }
+
+        .stat {
+            font-size: 32px;
+            font-weight: bold;
+            color: #7c3aed;
+            overflow-wrap: anywhere;
+        }
+
+        .muted {
+            color: #746d87;
+            font-size: 14px;
+        }
+
+        #message,
+        #weeklyMessage {
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        .entry {
+            border-bottom: 1px solid #eee8ff;
+            padding: 12px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .entry:last-child {
+            border-bottom: none;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        /* Weekly analysis cards */
+
+        .weekly-cards {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit, minmax(150px, 1fr)
+            );
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .weekly-card {
+            background: #f2edff;
+            padding: 18px;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .weekly-card h3 {
+            font-size: 14px;
+            color: #59418b;
+            margin-top: 0;
+        }
+
+        .weekly-card .stat {
+            font-size: 28px;
+        }
+
+        .weekly-card .muted {
+            margin-bottom: 0;
+        }
+
+        .weekly-chart-wrap {
+            position: relative;
+            height: 320px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .status-message {
+            min-height: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            color: #746d87;
+            padding: 25px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 450px) {
+            header {
+                padding: 24px 20px;
+            }
+
+            .mood {
+                padding: 10px 2px;
+            }
+
+            .mood span {
+                font-size: 10px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .weekly-chart-wrap {
+                height: 260px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>💜 MindCare</h1>
+        <p>Your daily mental wellness companion</p>
+    </header>
+
+    <main>
+
+        <!-- Mood selection and summary -->
+
+        <div class="grid">
+
+            <section class="card">
+                <h2>How are you feeling today?</h2>
+
+                <p class="muted">
+                    Choose the mood that best describes your day.
+                </p>
+
+                <div class="moods">
+
+                    <button type="button" class="mood"
+                        data-score="1" aria-pressed="false">
+                        😞<span>Very bad</span>
+                    </button>
+
+                    <button type="button" class="mood"
+                        data-score="2" aria-pressed="false">
+                        😕<span>Bad</span>
+                    </button>
+
+                    <button type="button" class="mood"
+                        data-score="3" aria-pressed="false">
+                        😐<span>Okay</span>
+                    </button>
+
+                    <button type="button" class="mood"
+                        data-score="4" aria-pressed="false">
+                        🙂<span>Good</span>
+                    </button>
+
+                    <button type="button" class="mood"
+                        data-score="5" aria-pressed="false">
+                        😄<span>Great</span>
+                    </button>
+
+                </div>
+
+                <label for="notes">
+                    Write about your day (optional)
+                </label>
+
+                <textarea
+                    id="notes"
+                    maxlength="500"
+                    placeholder="What's on your mind today?"></textarea>
+
+                <button type="button" class="primary" id="saveMood">
+                    Save my mood
+                </button>
+
+                <div id="message"
+                    class="status-message"
+                    role="status"
+                    aria-live="polite"></div>
+            </section>
+
+            <section class="card">
+                <h2>Your mood summary</h2>
+
+                <p class="muted">
+                    Records from the last 30 days
+                </p>
+
+                <p class="muted">Average mood</p>
+                <div class="stat" id="average">—</div>
+
+                <p class="muted">Total entries (all time)</p>
+                <div class="stat" id="total">0</div>
+
+                <p class="muted" id="lastEntry">
+                    No entries yet
+                </p>
+
+                <button type="button" class="primary" id="refresh">
+                    Refresh summary
+                </button>
+            </section>
+
+        </div>
+
+        <!-- Existing mood trend chart -->
+
+        <section class="card">
+            <h2>Your mood trends 📈</h2>
+
+            <p class="muted">
+                Track your recorded mood scores over the last 30 days.
+            </p>
+
+            <div class="chart-wrap">
+                <canvas id="moodChart"
+                    aria-label="Mood scores over time"
+                    role="img"></canvas>
+            </div>
+        </section>
+
+        <!-- NEW: Weekly mood analysis -->
+
+        <section class="card" id="weeklyAnalysis">
+
+            <h2>Weekly Mood Analysis 📊</h2>
+
+            <p class="muted" id="weeklyPeriod">
+                Analyzing your last seven days...
+            </p>
+
+            <div class="weekly-cards">
+
+                <div class="weekly-card">
+                    <h3>Weekly Average</h3>
+                    <div class="stat" id="weeklyAverage">—</div>
+                    <p class="muted">Out of 5</p>
+                </div>
+
+                <div class="weekly-card">
+                    <h3>Total Entries</h3>
+                    <div class="stat" id="weeklyEntries">—</div>
+                    <p class="muted">This week</p>
+                </div>
+
+                <div class="weekly-card">
+                    <h3>Mood Trend</h3>
+                    <div class="stat" id="weeklyTrend"
+                        style="font-size: 22px;">—</div>
+                    <p class="muted">Weekly pattern</p>
+                </div>
+
+            </div>
+
+            <h3>Daily Average Mood</h3>
+
+            <p class="muted">
+                Each point represents the average mood recorded
+                for that day. Hover over a point to see entry counts.
+            </p>
+
+            <div class="weekly-chart-wrap">
+                <canvas id="weeklyMoodChart"
+                    aria-label="Daily average mood for the last seven days"
+                    role="img"></canvas>
+            </div>
+
+            <div id="weeklyMessage"
+                class="status-message"
+                role="status"
+                aria-live="polite">
+                Loading weekly analysis...
+            </div>
+
+            <button type="button" class="primary"
+                id="refreshWeekly">
+                Refresh weekly analysis
+            </button>
+
+        </section>
+
+        <!-- Recent entries -->
+
+        <section class="card">
+            <h2>Recent mood entries</h2>
+
+            <div id="history">
+                Your saved entries will appear here.
+            </div>
+        </section>
+
+        <!-- Reminder -->
+
+        <section class="card">
+            <h2>A gentle reminder 💜</h2>
+
+            <p>
+                Every feeling deserves attention. Take a break,
+                breathe slowly, or talk to someone you trust when
+                you need support.
+            </p>
+
+            <p class="muted">
+                This tool supports self-reflection; it does not
+                diagnose mental health conditions.
+            </p>
+        </section>
+
+    </main>
+
+    <footer>
+        MindCare · Your wellbeing matters
+    </footer>
+
+    <script>
+        let selectedMood = null;
+        let moodChart = null;
+        let weeklyMoodChart = null;
+
+        const moodButtons = document.querySelectorAll(".mood");
+
+        // Select a mood
+
+        moodButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                selectedMood = Number(button.dataset.score);
+
+                moodButtons.forEach(item => {
+                    item.classList.remove("selected");
+                    item.setAttribute("aria-pressed", "false");
+                });
+
+                button.classList.add("selected");
+                button.setAttribute("aria-pressed", "true");
+
+                document.getElementById("message").textContent = "";
+            });
+        });
+
+        // Load the existing summary, history, and mood chart
+
+        async function loadSummary() {
+            const message = document.getElementById("message");
+
+            try {
+                const response = await fetch("/api/summary");
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Could not load summary."
+                    );
+                }
+
+                document.getElementById("average").textContent =
+                    data.avg_mood_30_days ?? "—";
+
+                document.getElementById("total").textContent =
+                    data.total_entries ?? 0;
+
+                document.getElementById("lastEntry").textContent =
+                    data.last_entry
+                        ? "Last entry: " +
+                          new Date(data.last_entry).toLocaleString()
+                        : "No entries yet";
+
+                const entries = data.recent_entries || [];
+
+                // Update the existing 30-day chart
+
+                const canvas = document.getElementById("moodChart");
+
+                if (canvas && window.Chart) {
+                    if (moodChart) {
+                        moodChart.destroy();
+                    }
+
+                    const sortedEntries = entries.slice().sort(
+                        (a, b) =>
+                            new Date(a.timestamp) -
+                            new Date(b.timestamp)
+                    );
+
+                    moodChart = new Chart(canvas, {
+                        type: "line",
+
+                        data: {
+                            labels: sortedEntries.map(entry =>
+                                new Date(
+                                    entry.timestamp
+                                ).toLocaleDateString()
+                            ),
+
+                            datasets: [{
+                                label: "Mood score (1–5)",
+
+                                data: sortedEntries.map(
+                                    entry => entry.mood_score
+                                ),
+
+                                borderColor: "#7c3aed",
+
+                                backgroundColor:
+                                    "rgba(124, 58, 237, 0.15)",
+
+                                pointBackgroundColor: "#7c3aed",
+                                pointRadius: 4,
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+
+                            scales: {
+                                y: {
+                                    min: 1,
+                                    max: 5,
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Update recent mood history
+
+                const history = document.getElementById("history");
+                history.replaceChildren();
+
+                if (entries.length === 0) {
+                    history.textContent =
+                        "No mood entries in the last 30 days.";
+                } else {
+                    entries.slice().reverse().forEach(entry => {
+                        const item = document.createElement("div");
+                        item.className = "entry";
+
+                        const title = document.createElement("strong");
+
+                        title.textContent =
+                            "Mood: " + entry.mood_score +
+                            "/5 · " + (entry.sentiment || "Not analyzed");
+
+                        const note = document.createElement("p");
+
+                        note.textContent =
+                            entry.notes || "No journal note";
+
+                        const date = document.createElement("small");
+                        date.className = "muted";
+
+                        date.textContent =
+                            new Date(entry.timestamp).toLocaleString();
+
+                        item.append(title, note, date);
+                        history.appendChild(item);
+                    });
+                }
+
+            } catch (error) {
+                message.textContent =
+                    error.message ||
+                    "Unable to load summary. Check that the server is running.";
+            }
+        }
+
+        // NEW: Load weekly mood analysis from Flask
+
+        async function loadWeeklyAnalysis() {
+            const message = document.getElementById("weeklyMessage");
+
+            try {
+                const response = await fetch("/api/weekly-analysis");
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Could not load weekly analysis."
+                    );
+                }
+
+                // Update weekly summary cards
+
+                const average = data.weekly_average;
+
+                document.getElementById("weeklyAverage").textContent =
+                    average === null || average === undefined
+                        ? "—"
+                        : Number(average).toFixed(2);
+
+                document.getElementById("weeklyEntries").textContent =
+                    data.total_entries ?? 0;
+
+                document.getElementById("weeklyTrend").textContent =
+                    data.trend || "No data";
+
+                // Display the date range if the API provides it
+
+                if (data.period && data.period.start && data.period.end) {
+                    document.getElementById("weeklyPeriod").textContent =
+                        data.period.start + " to " + data.period.end;
+                } else {
+                    document.getElementById("weeklyPeriod").textContent =
+                        "Your mood summary for the last seven days";
+                }
+
+                // Read chart data from the API
+
+                const labels = data.labels || [];
+                const averages = data.daily_averages || [];
+                const counts = data.daily_entry_counts || [];
+
+                if (
+                    !Array.isArray(labels) ||
+                    !Array.isArray(averages) ||
+                    !Array.isArray(counts) ||
+                    labels.length !== averages.length ||
+                    labels.length !== counts.length
+                ) {
+                    throw new Error(
+                        "Weekly API returned an unexpected chart format."
+                    );
+                }
+
+                const canvas =
+                    document.getElementById("weeklyMoodChart");
+
+                if (!window.Chart) {
+                    throw new Error(
+                        "Chart.js did not load. Check your internet connection."
+                    );
+                }
+
+                if (weeklyMoodChart) {
+                    weeklyMoodChart.destroy();
+                }
+
+                // Create the weekly line chart
+
+                weeklyMoodChart = new Chart(canvas, {
+                    type: "line",
+
+                    data: {
+                        labels: labels,
+
+                        datasets: [{
+                            label: "Daily average mood",
+
+                            data: averages.map(value =>
+                                value === null ||
+                                value === undefined ||
+                                value === ""
+                                    ? null
+                                    : Number(value)
+                            ),
+
+                            borderColor: "#8b5cf6",
+
+                            backgroundColor:
+                                "rgba(139, 92, 246, 0.15)",
+
+                            pointBackgroundColor: "#7c3aed",
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            spanGaps: false
+                        }]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        scales: {
+                            y: {
+                                min: 1,
+                                max: 5,
+
+                                ticks: {
+                                    stepSize: 1
+                                },
+
+                                title: {
+                                    display: true,
+                                    text: "Mood score (1–5)"
+                                }
+                            },
+
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: "Day"
+                                }
+                            }
+                        },
+
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        const count =
+                                            counts[context.dataIndex] ?? 0;
+
+                                        return "Mood entries: " + count;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                message.textContent =
+                    "Weekly analysis loaded successfully.";
+
+            } catch (error) {
+                console.error("Weekly analysis error:", error);
+
+                message.textContent =
+                    error.message ||
+                    "Unable to load weekly analysis. Check your Flask API.";
+            }
+        }
+
+        // Save a mood to Flask
+
+        document.getElementById("saveMood").addEventListener(
+            "click", async () => {
+
+                const message = document.getElementById("message");
+
+                const notes =
+                    document.getElementById("notes").value.trim();
+
+                if (selectedMood === null) {
+                    message.textContent =
+                        "Please select a mood first.";
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/api/log_mood", {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            mood: selectedMood,
+                            note: notes
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            data.error || "Unable to save mood."
+                        );
+                    }
+
+                    message.textContent =
+                        "Mood saved successfully. Journal sentiment: " +
+                        (data.analysis?.sentiment || "Not available") +
+                        ". Sentiment is not a mental health diagnosis.";
+
+                    document.getElementById("notes").value = "";
+                    selectedMood = null;
+
+                    moodButtons.forEach(button => {
+                        button.classList.remove("selected");
+
+                        button.setAttribute(
+                            "aria-pressed", "false"
+                        );
+                    });
+
+                    // Refresh both dashboard sections after saving
+
+                    await Promise.all([
+                        loadSummary(),
+                        loadWeeklyAnalysis()
+                    ]);
+
+                    message.textContent =
+                        "Mood saved successfully. Your dashboard has been updated.";
+
+                } catch (error) {
+                    message.textContent =
+                        error.message || "Unable to save mood.";
+                }
+            }
+        );
+
+        // Refresh the full dashboard
+
+        document.getElementById("refresh").addEventListener(
+            "click", async () => {
+                await Promise.all([
+                    loadSummary(),
+                    loadWeeklyAnalysis()
+                ]);
+            }
+        );
+
+        // Refresh only the weekly analysis
+
+        document.getElementById("refreshWeekly").addEventListener(
+            "click", loadWeeklyAnalysis
+        );
+
+        // Load dashboard when the page opens
+
+        async function initializeDashboard() {
+            await Promise.all([
+                loadSummary(),
+                loadWeeklyAnalysis()
+            ]);
+        }
+
+        initializeDashboard();
+    </script>
+
+</body>
+</html>
